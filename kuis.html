@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kuisioner Penelitian</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: linear-gradient(to right, #f9f9ff, #e0f7fa);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .question {
+      margin-bottom: 25px;
+      font-size: 1.4em;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .option-btn {
+      padding: 15px 20px;
+      font-size: 1.1em;
+      border: 2px solid #007BFF;
+      border-radius: 10px;
+      background-color: #f0f8ff;
+      color: #007BFF;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: left;
+      font-weight: 500;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .option-btn::before {
+      content: '';
+      width: 20px;
+      height: 20px;
+      border: 2px solid #007BFF;
+      border-radius: 50%;
+      background-color: white;
+      display: inline-block;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .option-btn.selected::before {
+      background-color: #007BFF;
+      box-shadow: inset 0 0 0 4px white;
+    }
+
+    .option-btn:hover {
+      background-color: #e6f2ff;
+    }
+
+    .navigation {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+
+    .back {
+      background-color: #cccccc;
+      color: #333;
+      visibility: hidden;
+    }
+
+    .back.visible {
+      visibility: visible;
+    }
+
+    .next {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    .next:disabled {
+      background-color: #a0c8f0;
+      cursor: not-allowed;
+    }
+
+    .next:hover:enabled {
+      background-color: #0056b3;
+    }
+
+    /* Popup Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal {
+      background: white;
+      padding: 25px 30px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .modal h2 {
+      margin-bottom: 25px;
+      font-size: 1.2em;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .modal .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .modal button {
+      padding: 12px 24px;
+      min-width: 100px;
+      font-size: 1em;
+      border-radius: 8px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+    }
+
+    .modal .yes-btn {
+      background-color: #007BFF;
+      color: white;
+    }
+
+    .modal .no-btn {
+      background-color: #ccc;
+      color: #333;
+    }
+
+    .modal .yes-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .modal .no-btn:hover {
+      background-color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="question" id="question">Pertanyaan akan muncul di sini...</div>
+
+    <div class="options">
+      <button class="option-btn" onclick="selectOption(0)" id="option0">Opsi 1</button>
+      <button class="option-btn" onclick="selectOption(1)" id="option1">Opsi 2</button>
+    </div>
+
+    <div class="navigation">
+      <button class="back" id="backBtn" onclick="prevQuestion()">Kembali</button>
+      <button class="next" id="nextBtn" onclick="nextQuestion()" disabled>Lanjut</button>
+    </div>
+  </div>
+
+  <!-- Modal Popup -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2>Apakah kamu yakin ingin mengirimkan jawaban saat ini?</h2>
+      <div class="button-group">
+        <button class="yes-btn" onclick="goToNextPage()">Ya</button>
+        <button class="no-btn" onclick="closeModal()">Tidak</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { text: "Apa kesibukan yang sedang kamu lakukan saat ini?", options: ["Kuliah", "Bekerja"] },
+      { text: "Apakah kamu pernah memikirkan untuk membuat website sendiri saat kamu mengunjungi sebuah website?", options: ["Ya, pernah", "Tidak pernah sama sekali"] },
+      { text: "Apa kamu tertarik untuk belajar tentang wesite dan mengembangkannya?", options: ["Tidak sama sekali", "Ya, saya ingin mengembangkannya"] },
+      { text: "Manakah yang lebih kamu sukai ketika ingin mengenalkan usahamu?", options: ["Iklan melalui aplikasi", "Website landing page"] },
+      { text: "Jika kamu ingin mengembangkan sebuah website namun memiliki resource yang terbatas. Manakah yang lebih kamu utamakan?", options: ["Banyak fitur tapi design biasa", "Design menarik tapi fitur terbatas"] },
+      { text: "Ketika kamu mengunjungi sebuah website, pernahkah kamu merasa bahwa website tersebut kurang maksimal, baik dari tampilan, fitur, atau efektifitas?", options: ["Ya, saya pernah merasakannya", "Saya tidak peduli"] },
+      { text: "Pada rentang usia berapakah kamu mengisi kuisioner ini?", options: ["18-20", "20-22"] }
+    ];
+
+    let currentQuestion = 0;
+    let answers = Array(questions.length).fill(null);
+
+    function updateQuestion() {
+      const q = questions[currentQuestion];
+      document.getElementById("question").textContent = q.text;
+      document.getElementById("option0").textContent = q.options[0];
+      document.getElementById("option1").textContent = q.options[1];
+
+      document.querySelectorAll('.option-btn').forEach((btn, i) => {
+        btn.classList.toggle('selected', answers[currentQuestion] === i);
+      });
+
+      const backBtn = document.getElementById("backBtn");
+      backBtn.classList.toggle('visible', currentQuestion !== 0);
+
+      const nextBtn = document.getElementById("nextBtn");
+      nextBtn.textContent = currentQuestion === questions.length - 1 ? "Selesai" : "Lanjut";
+      nextBtn.disabled = answers[currentQuestion] === null;
+    }
+
+    function selectOption(index) {
+      answers[currentQuestion] = index;
+      updateQuestion();
+    }
+
+    function nextQuestion() {
+      if (answers[currentQuestion] === null) {
+        alert("Silakan pilih salah satu jawaban sebelum lanjut.");
+        return;
+      }
+
+      if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        updateQuestion();
+      } else {
+        document.getElementById("modalOverlay").style.display = "flex";
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestion > 0) {
+        currentQuestion--;
+        updateQuestion();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("modalOverlay").style.display = "none";
+    }
+
+    function goToNextPage() {
+      console.log("Jawaban Anda:", answers.map((a, i) => questions[i].options[a]));
+      window.location.href = "ucapan.html";
+    }
+
+    updateQuestion();
+  </script>
+</body>
+</html>
